@@ -86,7 +86,17 @@ class Head(nn.Module):
         # i want to attend more when the input is a vowel. this is when the embedding value is 13, 17, 21, 27, 33, 39, 43, 47, 53, 59
         # here's a way to do it 
         vowels = torch.tensor([13, 17, 21, 27, 33, 39, 43, 47, 53, 59], device=device)
-        # 
+        embeddings = self.token_embedding_table(vowels) + self.position_embedding_table(vowels) # (10, hs)
+        #print(embeddings.shape, "embeddings")
+        embeddings = embeddings.view(1, 10, C) # (1, 10, C)
+        #print(embeddings, "embeddings")
+        # if x[:i:]) == embeddings[:j:] for i in range(1, block_size+1) for j in range(1, 11), record all such i's in a tensor T
+        # for all k[:i:] when i is in T, k[:i:] = 1.1*k[:i:]
+        # heres a way to do it
+        for k in range(1, block_size+1):
+            for j in range(1, 11):
+                if (x[:k:] == embeddings[:j:]).all():
+                    x[:k:] = 1.1*x[:k:]
 
         # compute attention scores ("affinities")
         wei = q @ k.transpose(-2,-1) * k.shape[-1]**-0.5 # (B, T, hs) @ (B, hs, T) -> (B, T, T)
